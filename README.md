@@ -1,58 +1,58 @@
 # Food Security and Global Health Region Analysis
 
-Este repositorio contiene los datos y el código en R necesarios para analizar la relación entre las publicaciones sobre seguridad alimentaria y diversos indicadores de salud global, abarcando diferentes regiones de la OMS y grupos de ingresos.
+This repository contains the datasets and R code necessary to analyze the relationship between food security publications and various global health indicators across different WHO regions and income groups.
 
-## 📂 Estructura del Repositorio
+## Repository Structure
 
-El proyecto está dividido en dos carpetas principales:
+The project is divided into two main directories:
 
-### 1. `data/` (Datos)
-Contiene los archivos de Excel con la información cruda y los datos procesados en cada paso del análisis:
+### 1. data/ (Datasets)
+Contains the raw and processed Excel files for each step of the analysis:
 
-* **`data.xlsx`**: Es la base de datos cruda original que contiene a nivel de publicación/país las variables bibliométricas y todos los indicadores globales (salud, economía, agricultura, etc.).
-* **`step_1_region_global_health.xlsx`**: Resultados agregados del **Paso 1**. Contiene los resultados de los modelos de regresión simples evaluando las asociaciones entre publicaciones e indicadores en las distintas regiones de la OMS.
-* **`step_2_region_global_health.xlsx`**: Resultados del **Paso 2**. Contiene los resultados de los modelos de efectos mixtos (Mixed-Effects Models), donde la "región" se utiliza como un efecto aleatorio para capturar la varianza regional.
-* **`step_3_region_global_health.xlsx`**: Resultados del **Paso 3**. Incluye análisis de interacciones y moderaciones (slopes simples, percentiles 25 y 75) para entender cómo el efecto de la seguridad alimentaria cambia según ciertas covariables.
+* `data.xlsx`: The original raw database containing bibliometric variables and all global indicators (health, economy, agriculture, etc.) at the publication/country level.
+* `step_1_region_global_health.xlsx`: Aggregated results for Step 1. Contains the output of simple regression models evaluating the associations between publications and indicators across different WHO regions.
+* `step_2_region_global_health.xlsx`: Aggregated results for Step 2. Contains the output of Mixed-Effects Models, where "region" is used as a random effect to capture regional variance.
+* `step_3_region_global_health.xlsx`: Aggregated results for Step 3. Includes interactions and moderation analyses (e.g., simple slopes at the 25th and 75th percentiles) to understand how the effect of food security publications changes based on certain covariates.
 
-### 2. `src/` (Código Fuente)
-Contiene los scripts de R que ejecutan toda la limpieza, análisis estadístico y visualización:
+### 2. src/ (Source Code)
+Contains the R scripts that execute data cleaning, statistical analysis, and visualization:
 
-* **`Main Analysis.R`**: Es el motor principal del análisis. 
-  * **Depuración**: Limpia la base de datos cruda (`data.xlsx`), transformando textos a números, eliminando comas, convirtiendo porcentajes a proporciones (0-1), y manejando símbolos de moneda ($).
-  * **Agregación**: Agrupa los datos a nivel de país-año y calcula promedios ponderados por población (`Population in year`), separando el análisis por "Grupos de Ingresos" y por "Regiones de la OMS".
-  * **Pre-análisis**: Categoriza decenas de indicadores en clústeres temáticos (ej. *Health System & Financing*, *Agricultural inputs*, *Dietary patterns*) y define si cada indicador actúa como variable dependiente o independiente.
-  * **Modelamiento Estadístico**: Implementa un sofisticado sistema de selección de modelos. Detecta automáticamente si una variable requiere un modelo de conteo (Poisson, Binomial Negativo), proporciones (Quasi-binomial, GLMM Beta) o continuo (Linear Gaussian, LMM), y ejecuta las regresiones de los pasos 1, 2 y 3.
+* `Main Analysis.R`: The core analytical engine.
+  * Data Cleaning: Depurates the raw database (`data.xlsx`), converting text to numeric values, removing commas, parsing percentages into proportions (0-1), and handling currency symbols.
+  * Aggregation: Groups data at the country-year level and calculates population-weighted averages (`Population in year`), stratifying the analysis by Income Groups and WHO Regions.
+  * Pre-analysis: Categorizes dozens of indicators into thematic clusters (e.g., Health System & Financing, Agricultural Inputs, Dietary Patterns) and establishes the role of each indicator (dependent vs. independent variable).
+  * Statistical Modeling: Implements an automated model selection framework. It determines whether a variable requires a count model (Poisson, Negative Binomial), a proportion model (Quasi-binomial, GLMM Beta), or a continuous model (Linear Gaussian, LMM), and executes the regressions for steps 1, 2, and 3.
 
-* **`R Plots.R`**: Es el script de visualización y post-procesamiento. 
-  * Toma los resultados procesados (`step_1`, `step_2`, `step_3`) y aplica una **escala matemática** estandarizada (ver sección de Metodología abajo).
-  * Construye el **Figura 1** (Heatmap de calor mostrando la dirección, magnitud y significancia de las asociaciones regionales).
-  * Construye el **Figura 2** (Forest Plot mostrando los coeficientes, IRR y OR con sus respectivos intervalos de confianza bajo modelos de efectos mixtos).
-  * Exporta los gráficos en alta resolución (`.png`, `.pdf`, `.svg`).
+* `R Plots.R`: The visualization and post-processing script.
+  * Takes the processed output from the regressions (`step_1`, `step_2`, `step_3`) and applies a standardized mathematical scaling factor (see the Scaling Methodology section below).
+  * Generates Figure 1 (Heatmap depicting the direction, magnitude, and significance of regional associations).
+  * Generates Figure 2 (Forest Plot depicting coefficients, IRRs, and ORs with their respective confidence intervals under mixed-effects models).
+  * Exports high-resolution visualizations (`.png`, `.pdf`, `.svg`).
 
 ---
 
-## 🔬 Metodología de Escalado (Scaling)
+## Scaling Methodology
 
-Para garantizar la reproducibilidad y facilitar la interpretación de los resultados en los manuscritos, todos los efectos en el archivo `R Plots.R` se escalan a una unidad de **"+100 publicaciones"**. 
+To ensure reproducibility and facilitate the interpretation of results in the manuscript, all effect sizes in `R Plots.R` are scaled to represent the effect of an increase of **+100 publications**.
 
-Esto se implementa de la siguiente manera:
+This scaling is implemented as follows:
 
-1. **Efectos Principales (Modelos Lineales - $\beta$)**:
-   El coeficiente crudo y sus intervalos de confianza (95% CI) se multiplican por 100.
+1. Main Effects (Linear Models):
+   The raw $\beta$ coefficient and its 95% Confidence Intervals (CI) are multiplied by 100.
    `estimate_scaled = estimate_raw * 100`
 
-2. **Modelos de Razón (IRR, OR)**:
-   Dado que los estimadores crudos provienen de enlaces logarítmicos (*log-link* o *logit*), se multiplican por 100 antes de aplicar la exponenciación.
+2. Ratio Models (IRR, OR):
+   Since the raw estimates are generated on a log-link or logit scale, they are multiplied by 100 before exponentiation.
    `estimate_scaled = exp(estimate_raw * 100)`
 
-3. **Interacciones (Step 3)**:
-   Las pendientes simples (efecto de +100 publicaciones en niveles bajos y altos de un moderador, como el percentil 25 y 75) y los ratios de contraste se calculan propagando de forma exacta el factor `X_SCALE <- 100` a las estimaciones logarítmicas y sus intervalos de confianza.
+3. Interactions (Step 3):
+   Simple slopes (the effect of +100 publications at low and high levels of a moderator) and contrast ratios are calculated by propagating the `X_SCALE <- 100` factor exactly to the logarithmic estimates and their confidence bounds.
 
 ---
 
-## 🚀 Cómo utilizar este repositorio
+## Usage
 
-1. Clona el repositorio a tu máquina local.
-2. Asegúrate de tener instalados los paquetes requeridos de R (`dplyr`, `ggplot2`, `readxl`, `lme4`, `glmmTMB`, `MASS`, `lmtest`, `sandwich`, etc.).
-3. Ejecuta `src/Main Analysis.R` si deseas regenerar las regresiones desde los datos crudos.
-4. Ejecuta `src/R Plots.R` para aplicar la escala de +100 publicaciones y generar los gráficos listos para publicación.
+1. Clone this repository to your local machine.
+2. Ensure you have installed the required R packages (`dplyr`, `ggplot2`, `readxl`, `lme4`, `glmmTMB`, `MASS`, `lmtest`, `sandwich`, etc.).
+3. Execute `src/Main Analysis.R` to regenerate all regression models from the raw data.
+4. Execute `src/R Plots.R` to apply the +100 publications scaling and generate publication-ready visualizations.
